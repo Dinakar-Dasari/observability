@@ -1,3 +1,6 @@
++ The main purpose of monitoring is to centralise monitoring system of all the servers, services, application by scraping the metrics by promoetheus and visulazing on grafana
+
+
 #### observability:
 + It’s the ability to understand what’s happening inside your systems (apps, servers, containers, clusters) by looking at the signals they produce — like **logs, metrics, and traces.**
   + **Monitoring(Metrics):** involves tracking system metrics like CPU usage, memory usage, and network performance. Provides alerts based on predefined thresholds and conditions. `Monitoring tells us what is happening`
@@ -52,6 +55,11 @@
     + Some targets might not expose the /metric path for those to collect metrics we use exporters
     + **Exporters:**
       + Exporters in Prometheus are used when a target (like a database, hardware device, network equipment, or certain programs) cannot natively expose metrics via the /metrics HTTP endpoint that Prometheus expects to scrape.
+      + **Exporters are like metric translators:**
+        + An exporter is a small agent that:
+        + Runs on a target machine (node)
+        + Collects system/app data
+        + Converts it into a format Prometheus can understand (text-based metrics over HTTP)
       + **Exporters act as intermediaries:** they collect data from such systems in their original format, convert it into Prometheus-compatible metrics, and then expose those metrics on their own /metrics endpoint, which Prometheus can scrape.
         + The **Node Exporter** exposes metrics from the operating system.
         + **MySQL Exporter** (for database metrics)
