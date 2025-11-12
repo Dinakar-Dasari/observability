@@ -54,8 +54,9 @@
     + Some targets might not expose the /metric path for those to collect metrics we use exporters
     + **Exporters:**
       + Exporters in Prometheus are used when a target (like a database, hardware device, network equipment, or certain programs) cannot natively expose metrics via the /metrics HTTP endpoint that Prometheus expects to scrape.
-      + node_exporter (for OS-level metrics)
-      + cadvisor (for container metrics)
+      + `node_exporter` (for OS-level metrics)
+      + `cadvisor` (for container metrics)
+        + cAdvisor (Container Advisor) runs inside each node and collects container-level metrics (CPU, memory, network, filesystem). 
       + app_exporter (for custom app metrics)
       + **Exporters are like metric translators:**
         + An exporter is a small agent that:
