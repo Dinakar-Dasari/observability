@@ -1,6 +1,5 @@
 + The main purpose of monitoring is to centralise monitoring system of all the servers, services, application by scraping the metrics by promoetheus and visulazing on grafana
 
-
 #### observability:
 + It’s the ability to understand what’s happening inside your systems (apps, servers, containers, clusters) by looking at the signals they produce — like **logs, metrics, and traces.**
   + **Monitoring(Metrics):** involves tracking system metrics like CPU usage, memory usage, and network performance. Provides alerts based on predefined thresholds and conditions. `Monitoring tells us what is happening`
@@ -55,6 +54,9 @@
     + Some targets might not expose the /metric path for those to collect metrics we use exporters
     + **Exporters:**
       + Exporters in Prometheus are used when a target (like a database, hardware device, network equipment, or certain programs) cannot natively expose metrics via the /metrics HTTP endpoint that Prometheus expects to scrape.
+      + node_exporter (for OS-level metrics)
+      + cadvisor (for container metrics)
+      + app_exporter (for custom app metrics)
       + **Exporters are like metric translators:**
         + An exporter is a small agent that:
         + Runs on a target machine (node)
@@ -98,3 +100,60 @@
               + **Receiver** – Collects data (e.g., metrics from app).
               + **Processor** – Processes/aggregates data (e.g., batching, filtering).
               + **Exporter** – Sends data to chosen observability backend (configured in YAML/JSON, no code changes needed).
+
+#### How prometheus fetches the data ?
+   + Prometheus is a **pull-based** monitoring system.
+   + It can fetches the data in two ways statically & dynamically.
+   + **statically:**
+       + Here it uses node exporter as an agent to pull the data because Without node-exporter running on the servers, there are no metrics endpoints to scrape
+       + We need to install `nodexporter` on the server where we need to pull the metrics from.
+       + `node-exporter` is the actual component running on each node that collects and exposes the system and hardware metrics (CPU, memory, disk, network, etc.).
+       + This node-exporter is used to collect all the data(metrics) of the server and make available at /metrics so that prometheus can access it.
+       + In the `prometheus.yml` we mention the targets as `ip of the server where nodeexporter installed:9090`
+       + ```
+          global:
+          scrape_interval: 60s # How frequently to scrape targets by default.
+          scrape_timeout: 10s # How long until a scrape request times out.
+          evaluation_interval: 60s # How frequently to evaluate rules.
+
+          # A scrape configuration
+          scrape_configs:
+            - job_name: prometheus
+              honor_labels: true
+              honor_timestamps: true
+              scheme: http
+              scrape_interval: 60s
+              scrape_timeout: 55s
+              metrics_path: /metrics
+              static_configs:
+              - targets: ['192.34.22.3:9090']
+         ```
+       + At that scrape interval, Prometheus sends an HTTP request to each target’s /metrics endpoint (for example, http://<server-ip>:9100/metrics).
+       + The Node Exporter responds with metrics data in plain text (key-value pairs).
+       + Prometheus then stores that data in its time-series database (TSDB).
+   + **dynamic service discovery:**
+       + When instances scale out or scale in, it’s difficult to track. For that purpose, we use service discovery… mentioning filters like AWS region and tags.
+       + We don't need to manually add the ip's of the targets in `prometheus.yaml` file. Instead based on the tag it will discover the servers & fetch the metrics
+       + Service discovery helps Prometheus or other monitoring tools automatically find which servers/nodes to scrape metrics from.
+       + We need to create an `IAM role` to describe the instances and attach to the prometheus server where it's running.
+       + node-exporter is the actual component running on each node that collects and exposes the system and hardware metrics (CPU, memory, disk, network, etc.).
+       + ```
+         global:
+              scrape_interval: 60s # How frequently to scrape targets by default.
+              scrape_timeout: 10s # How long until a scrape request times out.
+              evaluation_interval: 60s # How frequently to evaluate rules.
+          scrape_configs:
+            - job_name: 'ec2_nodes'
+              ec2_sd_configs:
+                - region: us-east-1
+                  access_key: YOUR_AWS_ACCESS_KEY
+                  secret_key: YOUR_AWS_SECRET_KEY
+                  filters:
+                    - name: tag:Environment
+                      values: ["production"]
+              relabel_configs:
+                - source_labels: [__meta_ec2_private_ip]
+                  target_label: __address__
+                  replacement: '${1}:9100'   # Node exporter port
+         ```
+       + EC2 service discovery fetches all EC2 instances that match the tag Environment=production.
